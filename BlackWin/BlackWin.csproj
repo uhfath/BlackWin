@@ -6,7 +6,12 @@
     <Nullable>disable</Nullable>
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
+    <ApplicationIcon>monitor.ico</ApplicationIcon>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include="monitor.ico" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="WindowsDisplayAPI" Version="1.3.0.13" />

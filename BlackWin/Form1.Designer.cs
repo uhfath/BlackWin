@@ -29,6 +29,7 @@
 		private void InitializeComponent()
 		{
 			components = new System.ComponentModel.Container();
+			System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
 			checkedListBox1 = new CheckedListBox();
 			panel1 = new Panel();
 			button1 = new Button();
@@ -86,6 +87,7 @@
 			ClientSize = new Size(800, 450);
 			Controls.Add(panel1);
 			FormBorderStyle = FormBorderStyle.None;
+			Icon = (Icon)resources.GetObject("$this.Icon");
 			Name = "Form1";
 			StartPosition = FormStartPosition.Manual;
 			Text = "Form1";
