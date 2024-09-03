@@ -1,63 +1,51 @@
+using System.ComponentModel;
 using System.Data;
 using System.Text.Json;
 using System.Windows.Forms;
 using WindowsDisplayAPI;
+using WindowsDisplayAPI.DisplayConfig;
 
 namespace BlackWin
 {
 	public partial class Form1 : Form
 	{
-		private const string SettingsFileName = "black_win.cfg";
-		private static readonly string SettingsFilePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), SettingsFileName);
-
 		private bool? _isHovered;
+		private bool _isInternalVisibleChange;
 
-		private HashSet<string> GetSavedDisplays()
-		{
-			if (File.Exists(SettingsFilePath))
-			{
-				var displays = File.ReadAllLines(SettingsFilePath);
-				return displays.ToHashSet(StringComparer.OrdinalIgnoreCase);
-			}
-
-			return null;
-		}
-
-		private void SaveDisplays(IEnumerable<string> displays)
-		{
-			File.WriteAllLines(SettingsFilePath, displays);
-		}
-
-		public Form1(Display currentDisplay)
+		public Form1(ScreenInfo currentScreenInfo, IEnumerable<ScreenInfo> screenInfos)
 		{
 			InitializeComponent();
-			SetBounds(currentDisplay.CurrentSetting.Position.X, currentDisplay.CurrentSetting.Position.Y, currentDisplay.CurrentSetting.Resolution.Width, currentDisplay.CurrentSetting.Resolution.Height);
+			SetBounds(currentScreenInfo.Display.CurrentSetting.Position.X, currentScreenInfo.Display.CurrentSetting.Position.Y, currentScreenInfo.Display.CurrentSetting.Resolution.Width, currentScreenInfo.Display.CurrentSetting.Resolution.Height);
 
-			if (currentDisplay.IsGDIPrimary)
+			foreach (var screenInfo in screenInfos.Where(s => s.DevicePath != currentScreenInfo.DevicePath))
 			{
-				panel1.Visible = true;
+				screenInfo.PropertyChanged += OnScreenInfoVisibleChanged;
+				checkedListBox1.Items.Add(screenInfo, screenInfo.IsVisible);
+			}
 
-				var adapters = WindowsDisplayAPI.DisplayConfig.PathDisplayTarget.GetDisplayTargets().ToArray();
-				var displays = Display.GetDisplays().Where(d => !d.IsGDIPrimary);
+			checkedListBox1.Dock = DockStyle.None;
+			checkedListBox1.Height = (checkedListBox1.Items.Count + 1) * checkedListBox1.ItemHeight;
+			checkedListBox1.Dock = DockStyle.Top;
+		}
 
-				var savedDisplays = GetSavedDisplays() ?? displays.Select(d => d.DevicePath).ToHashSet(StringComparer.OrdinalIgnoreCase);
+		private void OnScreenInfoVisibleChanged(object sender, PropertyChangedEventArgs eventArgs)
+		{
+			try
+			{
+				_isInternalVisibleChange = true;
 
-				foreach (var display in displays)
-				{
-					var adapter = adapters.Single(a => a.DevicePath == display.DevicePath);
-					var isChecked = savedDisplays.Contains(display.DevicePath);
+				var screenInfo = sender as ScreenInfo;
 
-					var form = new Form1(display);
-					form.Visible = isChecked;
+				var index = Array.IndexOf(checkedListBox1.Items
+					.Cast<ScreenInfo>()
+					.ToArray(),
+					screenInfo);
 
-					checkedListBox1.Items.Add(new ScreenInfo(form, display.DevicePath, adapter.FriendlyName), isChecked);
-				}
-
-				checkedListBox1.Dock = DockStyle.None;
-				checkedListBox1.Height = (displays.Count() + 1) * checkedListBox1.ItemHeight;
-				checkedListBox1.Dock = DockStyle.Top;
-
-				timer1.Enabled = true;
+				checkedListBox1.SetItemChecked(index, screenInfo.IsVisible);
+			}
+			finally
+			{
+				_isInternalVisibleChange = false;
 			}
 		}
 
@@ -88,45 +76,13 @@ namespace BlackWin
 
 		private void checkedListBox1_ItemCheck(object sender, ItemCheckEventArgs eventArgs)
 		{
+			if (_isInternalVisibleChange)
+			{
+				return;
+			}
+
 			var screen = checkedListBox1.Items[eventArgs.Index] as ScreenInfo;
-			var isChecked = eventArgs.NewValue == CheckState.Checked;
-			screen.Form.Visible = isChecked;
-
-			var displays = checkedListBox1.CheckedItems
-				.Cast<ScreenInfo>()
-				.Select(s => s.DevicePath)
-				.ToHashSet(StringComparer.OrdinalIgnoreCase)
-			;
-
-			if (isChecked)
-			{
-				displays.Add(screen.DevicePath);
-			}
-			else
-			{
-				displays.Remove(screen.DevicePath);
-			}
-
-			SaveDisplays(displays);
-		}
-
-		private record ScreenInfo
-		{
-			private readonly string _devicePath;
-			private readonly string _displayName;
-
-			public Form Form { get; }
-			public string DevicePath => _devicePath;
-
-            public ScreenInfo(Form form, string devicePath, string displayName)
-            {
-				Form = form;
-				_devicePath = devicePath;
-				_displayName = displayName;
-			}
-
-			public override string ToString() =>
-				_displayName;
+			screen.IsVisible = eventArgs.NewValue == CheckState.Checked;
 		}
 	}
 }

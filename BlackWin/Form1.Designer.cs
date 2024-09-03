@@ -60,7 +60,6 @@
 			panel1.Name = "panel1";
 			panel1.Size = new Size(800, 128);
 			panel1.TabIndex = 1;
-			panel1.Visible = false;
 			// 
 			// button1
 			// 
@@ -77,6 +76,7 @@
 			// 
 			// timer1
 			// 
+			timer1.Enabled = true;
 			timer1.Tick += timer1_Tick;
 			// 
 			// Form1
@@ -91,7 +91,6 @@
 			Name = "Form1";
 			StartPosition = FormStartPosition.Manual;
 			Text = "Form1";
-			TopMost = true;
 			panel1.ResumeLayout(false);
 			ResumeLayout(false);
 			PerformLayout();
