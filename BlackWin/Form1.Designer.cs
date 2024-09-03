@@ -91,6 +91,7 @@
 			Name = "Form1";
 			StartPosition = FormStartPosition.Manual;
 			Text = "Form1";
+			TopMost = true;
 			panel1.ResumeLayout(false);
 			ResumeLayout(false);
 			PerformLayout();
